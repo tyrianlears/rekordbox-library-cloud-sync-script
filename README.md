@@ -1,10 +1,10 @@
 # Rekordbox Library Cloud Sync Script
 
-**Automatic, subscription-free backup and restore of your rekordbox library — to Google Drive, Dropbox, iCloud Drive, OneDrive, an external disk or any folder you choose. macOS, rekordbox 6/7.**
+**Automatic, subscription-free backup and restore of your rekordbox library — to any cloud folder (Google Drive, Dropbox, iCloud Drive, OneDrive, Box, Proton Drive, pCloud, MEGA, Nextcloud, Sync.com…), an external disk or any folder you choose. macOS, rekordbox 7 (and 6).**
 
 rekordbox's own *Cloud Library Sync* needs a paid Creative/Professional plan (the Free plan syncs 20 tracks, or 1,000 with registered hardware). If your music already lives in a cloud folder and you use one Mac, you don't need it: this kit keeps the part a subscription really protects — your **database** (playlists, hot cues, memory cues, beat grids, tags, ratings) and the **analysis data** (waveforms, grids) — mirrored into your cloud folder automatically, with dated snapshots you can go back to, a one-click restore, and a tested path to a new Mac.
 
-It was built in a conversation with Claude for a real library (5,000+ tracks in Google Drive) and then made universal.
+It was built in a conversation with Claude for a real library (5,000+ tracks in a cloud folder) and then made universal: nothing in it depends on a particular cloud service — the kit only needs a folder that shows up in Finder.
 
 > The Music folder is never written to — every part of the kit treats it as read-only.
 
@@ -28,21 +28,38 @@ It was built in a conversation with Claude for a real library (5,000+ tracks in 
 ## Quick start
 
 1. **Download** this repository (green *Code* button → *Download ZIP*) or clone it, and unzip.
-2. Make sure your cloud app (Google Drive, Dropbox, …) is running and signed in, and that your music folder is *Available offline* if it lives in the cloud.
+2. Make sure your cloud app (Google Drive, Dropbox, iCloud, OneDrive, …) is running and signed in, and that your music folder is kept *on this Mac* ("available offline") if it lives in the cloud — see *Supported destinations* below.
 3. Quit rekordbox. In Finder open the `kit` folder, **right-click `Install.command` → Open → Open**.
 4. Answer the three-dialog wizard: library folder (detected), where backups go, optional music folder. Say **Y** to the first backup.
 5. Open `~/Applications/rekordbox Backup.app` → **More… › Restore drill** once, to prove the backup restores cleanly.
 
 That's it — backups now run by themselves. The full guide follows.
 
-**Requirements:** macOS 12 or newer, rekordbox 6 or 7 (Free plan is fine), your music in any folder that is on this Mac (a cloud folder in *Stream* mode must be *Available offline*). No Homebrew, no extra software.
+**Requirements:** macOS 12 or newer (Apple silicon or Intel), rekordbox 7 or 6 (Free plan is fine), your music in any folder that is on this Mac (a cloud folder that streams files on demand must have the music folder kept offline). No Homebrew, no extra software. Windows is not supported (the scheduler, the app and the folder layout are macOS-specific).
+
+## Supported destinations
+
+Anything that appears as a folder in Finder can hold the backups. The wizard lists what it finds on the Mac and always offers **Other folder…** for everything else (NAS, network share, a second internal disk).
+
+| Destination | Detected automatically | Keep the music folder on the Mac (right-click in Finder) |
+|---|---|---|
+| Google Drive for desktop | ✅ (Stream and Mirror layouts, localised "My Drive" names) | **Make available offline** |
+| Dropbox | ✅ | **Make available offline** (Dropbox › Available offline) |
+| iCloud Drive | ✅ | **Download Now**, and **Keep Downloaded** (or turn off *Optimise Mac Storage*) |
+| OneDrive | ✅ | **Always Keep on This Device** |
+| Box Drive | ✅ | **Make Available Offline** |
+| Proton Drive, pCloud, MEGA, Nextcloud, Sync.com | ✅ (default folders) | see the app's own "keep offline" option |
+| External disk / USB SSD | ✅ (writable volumes under `/Volumes`) | — (always local; plug it in for backups to run) |
+| Any other folder, NAS, network share | via **Other folder…** | — |
+
+Two things matter for every service: the cloud app must be running and signed in when a backup is due (otherwise the run is skipped and retried later — nothing breaks), and the *music* folder must be fully downloaded, because rekordbox cannot play placeholder files. **Check music folder** in the app tells you whether it is.
 
 ---
 
 ## 1. What is in the folder
 
 ```
-Google Drive › rekordbox-backup/
+<your cloud folder or disk> › rekordbox-backup/
 ├── README.md (+ README.pdf if you keep one) this guide
 ├── NOTES.md                    build notes, sources, lessons learned
 ├── kit/                        the scripts — double-click Install.command to install
@@ -69,7 +86,7 @@ On the Mac the kit installs itself into `~/Library/Application Support/rekordbox
 
 ## 2. Install on this Mac (first launch)
 
-1. If your backups will live in a cloud folder, make sure that cloud app (Google Drive, Dropbox, iCloud, OneDrive…) is running and signed in. If your music is in a cloud folder, it should be **Available offline** (see §6.2).
+1. If your backups will live in a cloud folder, make sure that cloud app is running and signed in. If your music is in a cloud folder, it should be kept **on this Mac / available offline** (see *Supported destinations* and §6.2).
 2. In Finder open the kit folder (`rekordbox-backup › kit` next to your backups, or the downloaded copy).
 3. **Right-click `Install.command` → Open → Open.** (First time only: macOS blocks double-clicking a downloaded script. If it still refuses: System Settings › Privacy & Security › *Open Anyway*.)
 4. **The folder wizard** appears — three short dialogs:
@@ -79,7 +96,7 @@ On the Mac the kit installs itself into `~/Library/Application Support/rekordbox
    - A summary follows — press **Install**.
    - **Tip for every folder window:** the `Library` folder is hidden by default. Press **⌘⇧G** (Command-Shift-G), paste the path — e.g. `~/Library/Pioneer` — and press Enter; the window jumps straight there. `~` means your home folder. (⌘⇧. shows hidden folders too.)
 5. The installer then copies the scripts, schedules the automatic backups, builds the app, sends a **test notification**, runs a self-test and offers to run the **first backup** (say **Y**; the first run copies the whole library, later runs take seconds). The app opens at the end.
-6. If macOS asks whether Terminal (or the app) may access files, click **Allow** — the backup needs to read `~/Library` and write into Google Drive. If it asks whether **Script Editor** may send notifications, click **Allow** — that is where the "backup ✓" notifications come from.
+6. If macOS asks whether Terminal (or the app) may access files, click **Allow** — the backup needs to read `~/Library` and write into the backup folder. If it asks whether **Script Editor** may send notifications, click **Allow** — that is where the "backup ✓" notifications come from.
 7. Optional: drag `~/Applications/rekordbox Backup.app` to the Dock. The `kit/commands/` folder holds the same actions as double-click files if you prefer those.
 
 Re-running `Install.command` at any time is safe: it updates the scripts and repairs the schedule without touching backups. To change folders later, use the app → **More… › Settings…** (or `kit/commands/Settings (change folders).command`) — the same wizard, pre-filled with your current choices. If the backup destination changes, the next run does a full mirror to the new place.
@@ -92,7 +109,7 @@ Opened the app before installing? It shows a **Set up…** button that asks for 
 
 **Nothing to do.** Every 30 minutes a background job checks: if rekordbox is closed and something changed, it mirrors the library into `latest/` (seconds). Once a day it also files a dated database snapshot into `history/`, tidies old snapshots, and warns you if no backup has succeeded for 3 days. If the Mac was asleep at 03:00 the daily run happens when it wakes.
 
-**The app** (`rekordbox Backup.app`) shows the status (last backup, whether automatic backups are ON or PAUSED and when the next check is due, Google Drive, rekordbox) and three buttons:
+**The app** (`rekordbox Backup.app`) shows the status (last backup, whether automatic backups are ON or PAUSED and when the next check is due, backup folder, rekordbox) and three buttons:
 
 | Button | What it does |
 |---|---|
@@ -120,7 +137,7 @@ Opened the app before installing? It shows a **Set up…** button that asks for 
 
 Excluded: log folders, caches, `.DS_Store`. **Not included on purpose:** the music files — keep those in your cloud folder or on a disk of their own.
 
-Retention: 14 daily snapshots, then the first snapshot of each month for 6 months, and the 10 newest manual snapshots. Cloud services usually add their own version history on top (Google Drive keeps changed files for 30 days).
+Retention: 14 daily snapshots, then the first snapshot of each month for 6 months, and the 10 newest manual snapshots. Most cloud services add their own version history on top (Google Drive and Dropbox keep earlier versions of changed files for 30 days on their basic plans).
 
 ---
 
@@ -147,22 +164,20 @@ Use it when rekordbox will not open, the collection looks empty or damaged, or y
 - Note the rekordbox version (rekordbox › About) — it is also written in `latest/BACKUP-INFO.txt`.
 - Best possible move: give the new Mac **the same macOS user name** (short name, the one in `/Users/<name>`). Then every path is identical and no fixing is needed.
 
-### 6.2 New Mac — Google Drive and the music
-(The steps assume Google Drive. Dropbox, iCloud Drive and OneDrive have the same idea: install the app, sign in, then make the music folder "available offline" / "always keep on this device" and wait for the download.)
-
-1. Install **Google Drive for desktop** (google.com/drive/download), sign in with the same Google account, choose **Stream files** in Preferences (as before).
-2. Wait until Finder shows `Google Drive › My Drive` with your folders (the file list arrives before the files).
-3. In Finder, **right-click `Music` → Make available offline** (Google Drive menu). Do the same for `rekordbox-backup`.
-4. Wait for the download to finish — the Drive icon in the menu bar shows progress. This downloads your whole music library, so it can take hours; plug the Mac in and keep it awake.
-5. Verify with the kit later (**More… › Check music folder**): it must report **0 online-only files**. rekordbox cannot play placeholder files, so do not skip this.
+### 6.2 New Mac — the cloud app and the music
+1. Install your cloud app (Google Drive for desktop, Dropbox, OneDrive, Box… — iCloud Drive is built in), sign in with the same account, and let it show your folders in Finder (the file list arrives before the files).
+2. In Finder, right-click your `Music` folder and choose the *keep on this Mac* option of your service — Google Drive / Dropbox: **Make available offline** · iCloud: **Download Now** then **Keep Downloaded** · OneDrive: **Always Keep on This Device** · Box: **Make Available Offline**. Do the same for the `rekordbox-backup` folder.
+3. Wait for the download to finish — the cloud app's menu-bar icon shows progress. This downloads your whole music library, so it can take hours; plug the Mac in and keep it awake.
+4. Verify with the kit later (**More… › Check music folder**): it must report **0 online-only files**. rekordbox cannot play placeholder files, so do not skip this.
+5. Backups on an external disk instead? Just connect it — nothing to download.
 
 ### 6.3 rekordbox
 1. Download and install **rekordbox 7** from rekordbox.com — the same version as on the old Mac or newer (rekordbox upgrades a database forward, never backward).
 2. Open it once, sign in with your AlphaTheta / Pioneer DJ account (Free plan is fine), then **quit it**. This creates the folders the restore needs.
 
 ### 6.4 Install the kit and restore
-1. Finder → `Google Drive › rekordbox-backup › kit` → right-click **Install.command → Open**. In the wizard choose `~/Library/Pioneer` (use anyway — it is empty until the restore), the same backup location (`rekordbox-backup` inside your cloud folder) and the Music folder. Skip the first backup when asked (there is nothing to back up yet).
-2. Open **rekordbox Backup.app → More… → Restore…** → choose `[0] latest` → type `RESTORE`. On a new Mac this also downloads `latest/` from Drive, so allow a few minutes.
+1. Finder → `<your cloud folder or disk> › rekordbox-backup › kit` → right-click **Install.command → Open**. In the wizard choose `~/Library/Pioneer` (use anyway — it is empty until the restore), the same backup location (`rekordbox-backup` inside your cloud folder or on the disk) and the Music folder. Skip the first backup when asked (there is nothing to back up yet).
+2. Open **rekordbox Backup.app → More… → Restore…** → choose `[0] latest` → type `RESTORE`. On a new Mac this also downloads `latest/` from the cloud, so allow a few minutes.
 3. The Terminal window ends with ✅ RESTORE COMPLETE.
 
 ### 6.5 Check inside rekordbox
@@ -173,7 +188,7 @@ Use it when rekordbox will not open, the collection looks empty or damaged, or y
 5. From now on the schedule on the new Mac keeps backing up as before.
 
 ### 6.6 If the user name is different on the new Mac
-The music paths in the database contain the user name (`/Users/<name>/Library/CloudStorage/GoogleDrive-…/My Drive/Music/…`), and so do the rekordbox settings files. Fix both in one go:
+The music paths in the database contain the user name (for example `/Users/<name>/Library/CloudStorage/GoogleDrive-…/My Drive/Music/…`, `/Users/<name>/Dropbox/Music/…` or `/Users/<name>/Library/Mobile Documents/com~apple~CloudDocs/Music/…`), and so do the rekordbox settings files. Fix both in one go:
 
 1. Quit rekordbox. Open the app → **More… › Fix paths**. It runs as a *dry run* first and shows: the old and new names, how many settings entries and how many tracks it would rewrite.
 2. If the numbers look right, run it for real in the same Terminal window:
@@ -190,9 +205,9 @@ The music paths in the database contain the user name (`/Users/<name>/Library/Cl
 - **Folders:** chosen in the wizard and stored in `config.sh` as `LIBRARY_DIR`, `SETTINGS_DIR`, `BACKUP_DIR`, `MUSIC_DIR` (optional) and `DRIVE_ROOT` (optional: the cloud/disk root that must be mounted for a backup to run). The wizard is `rbk-setup.sh`; `Install.command --library … --backup … --music … --yes` installs without questions.
 - **Schedule:** two launchd agents — `com.rekordbox-backup-kit.interval` (every 1800 s) and `…daily` (03:00, also housekeeping). Both run `rbk-backup.sh --auto`.
 - **Pause / Resume:** `rbk-toggle.sh` unloads the two agents (`launchctl bootout`) **and** marks them disabled (`launchctl disable`), which is why a pause survives reboots; Resume re-enables and reloads them. The app reads the real launchd state every time it opens, so the button label cannot drift.
-- **Safety rules built in:** skip if rekordbox is running (`pgrep -x rekordbox`); skip if Google Drive is not mounted; skip if nothing changed since the last stamp; one job at a time (lock); a backup is only marked successful if `master.db` is present in the mirror; a restore always keeps the previous library and can be rolled back; the `Music` folder is never written.
+- **Safety rules built in:** skip if rekordbox is running (`pgrep -x rekordbox`); skip if the backup folder is not available (cloud app not running, disk unplugged); skip if nothing changed since the last stamp; one job at a time (lock); a backup is only marked successful if `master.db` is present in the mirror; a restore always keeps the previous library and can be rolled back; the `Music` folder is never written.
 - **Change detection:** files newer than the last-backup stamp; snapshot only when the fingerprint of the database files changed.
-- **Placeholders:** `Check music` counts files that have a size but no allocated blocks — how Google Drive Stream mode represents online-only files — and cross-checks the macOS `dataless` flag.
+- **Placeholders:** `Check music` counts files that have a size but no allocated blocks — how macOS File Provider clouds (Google Drive Stream, Dropbox, iCloud, OneDrive, Box) represent online-only files — and cross-checks the macOS `dataless` flag.
 - **Logs:** `~/Library/Logs/rekordbox-backup/rekordbox-backup.log` (a copy of the tail in `rekordbox-backup/logs/`).
 - **Settings:** `~/Library/Application Support/rekordbox-backup/config.sh` (folders, retention, stale threshold, notifications) — folders via the app's Settings…, the rest by editing the file. To change the schedule, edit the two plist files in `kit/launchd/` (`StartInterval` seconds / `Hour`) and re-run `Install.command`.
 
@@ -204,7 +219,7 @@ The music paths in the database contain the user name (`/Users/<name>/Library/Cl
 |---|---|
 | "Install.command cannot be opened because Apple could not verify it / unidentified developer" | Right-click → Open → Open. Or System Settings › Privacy & Security › scroll down › **Open Anyway**. |
 | Log shows `Operation not permitted` | System Settings › Privacy & Security › **Full Disk Access** → add **Terminal**, **rekordbox Backup.app** and `/bin/bash` (in the file picker press ⌘⇧G and type `/bin/bash`). Then re-run the self-test. |
-| Status says the backup folder is **not available** | The cloud app (Google Drive, Dropbox…) is not running or signed out, or the external disk is not connected. Fix that, wait a minute, run Back up now. |
+| Status says the backup folder is **not available** | The cloud app is not running or signed out, or the external disk is not connected. Fix that, wait a minute, run Back up now. Runs that were skipped meanwhile are simply retried. |
 | I cannot see the `Library` folder in the folder window | It is hidden by default: press **⌘⇧G** and paste `~/Library/Pioneer` (or press ⌘⇧. to show hidden folders). |
 | I picked the wrong folder | App → More… › **Settings…** and choose again. Changing the backup destination triggers a full mirror on the next run. |
 | The wizard refuses my backup folder | It is inside the Music folder, inside the rekordbox library, or it is the home folder itself. Pick a separate folder (e.g. the root of your cloud drive, an external disk). |
@@ -225,7 +240,7 @@ Every script can also be run from Terminal with `--help` from `~/Library/Applica
 
 ## 9. Uninstall
 
-Double-click `kit/Uninstall.command`. It removes the schedule, the app and the local scripts. Backups in Google Drive and the rekordbox library stay untouched. To reinstall later: `Install.command`.
+Double-click `kit/Uninstall.command`. It removes the schedule, the app and the local scripts. Your backups and the rekordbox library stay untouched. To reinstall later: `Install.command`.
 
 ---
 

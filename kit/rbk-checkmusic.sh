@@ -41,8 +41,10 @@ if [ "$PH" -eq 0 ]; then
 else
     echo
     echo "⚠️  $PH file(s) are online-only placeholders. rekordbox will show them as missing or fail to load them."
-    echo "   Fix: in Finder, right-click the folder → 'Make available offline' (Google Drive / iCloud / OneDrive), wait for the"
-    echo "   download to finish (Drive icon in the menu bar shows progress), then run this check again."
+    echo "   Fix: in Finder, right-click the folder and choose the 'keep on this Mac' option of your cloud app"
+    echo "   (Google Drive / Dropbox: 'Make available offline' · iCloud: 'Download Now' / 'Keep Downloaded' ·"
+    echo "   OneDrive: 'Always Keep on This Device' · Box: 'Make Available Offline'), wait for the download to"
+    echo "   finish (the cloud app's menu-bar icon shows progress), then run this check again."
     [ -n "$LIST" ] && { echo "   First examples:"; printf '%s\n' "$LIST"; }
     rbk_log "checkmusic: $TARGET — $PH of $TOTAL files are online-only"
 fi

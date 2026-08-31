@@ -91,7 +91,7 @@ end togglePause
 
 on emergencyRestore()
 	try
-		display dialog "Emergency restore replaces the rekordbox library on this Mac with the backup from Google Drive." & return & return & "Your current library is kept aside first, so this can be undone (More… › Restore rollback)." & return & return & "A Terminal window will guide you through it." with title appTitle buttons {"Cancel", "Continue"} default button "Cancel" with icon caution
+		display dialog "Emergency restore replaces the rekordbox library on this Mac with the backup kept in your backup folder." & return & return & "Your current library is kept aside first, so this can be undone (More… › Restore rollback)." & return & return & "A Terminal window will guide you through it." with title appTitle buttons {"Cancel", "Continue"} default button "Cancel" with icon caution
 	on error number -128
 		return
 	end try

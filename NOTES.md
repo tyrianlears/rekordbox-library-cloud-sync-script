@@ -47,6 +47,10 @@ Built 31 Aug 2026 by Claude with Nick Rosa. Version 1.2 (1.1 + folder wizard at 
 6. Locale: the Drive folder may be `Il mio Drive` on an Italian macOS — detection uses a wildcard, but confirm the path printed by the installer.
 7. Whether `rekordboxAgent` keeps `master.db` open after rekordbox quits (the restore stops it; the backup only checks the `rekordbox` process).
 
+## v1.2.1 — cloud-agnostic audit (31 Aug 2026)
+- Grepped every script and the README for "Google"/"Drive": only comments, one app dialog, Check music's fix text and the unattended default were Google-specific; all rewritten to be service-neutral. `DRIVE_ROOT` / `rbk_drive_available` names were kept for compatibility (they mean "the mounted root the backup folder lives in").
+- Destination detection extended (Box, Proton Drive, pCloud, MEGA, Nextcloud, Sync.com); anything else is reachable via "Other folder…". Placeholder detection (size > 0, blocks = 0, `dataless` flag) applies to every File-Provider-based cloud on macOS.
+
 ## Lessons learned while building
 - A folder wizard needs containment rules, not just existence checks: without them "pick any folder" let the backup land inside the Music folder (breaking the read-only rule) or inside the library (recursive mirror). Resolve symlinks (`pwd -P`) before comparing paths, and validate on every entry path (GUI, typed prompt, CLI flags).
 - `set -u` + `$USER`: launch environments do not always define `USER` → use `${USER:-$(id -un)}`.

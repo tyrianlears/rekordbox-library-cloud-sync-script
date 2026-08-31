@@ -7,7 +7,7 @@
 #   --dry-run   show what would happen, change nothing
 #   --verbose   print log lines even when not in a terminal
 #
-# Exit codes: 0 done/nothing to do · 1 failure · 2 config problem · 3 rekordbox open · 4 Drive unavailable
+# Exit codes: 0 done/nothing to do · 1 failure · 2 config problem · 3 rekordbox open · 4 backup folder unavailable
 set -u
 RBK_TAG="backup"
 # shellcheck disable=SC1091

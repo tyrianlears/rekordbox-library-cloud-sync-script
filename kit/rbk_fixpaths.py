@@ -2,7 +2,7 @@
 """rbk_fixpaths.py — rewrite the track-path prefix inside rekordbox's master.db.
 
 Used by rbk-fixpaths.sh after a restore on a Mac whose user name differs from the old one
-(the Google Drive path contains the user name: /Users/<name>/Library/CloudStorage/...).
+(cloud-folder paths contain the user name, e.g. /Users/<name>/Library/CloudStorage/...).
 
     python3 rbk_fixpaths.py --db ~/Library/Pioneer/rekordbox7/master.db \
         --old /Users/olduser/ --new /Users/newuser/ [--apply]

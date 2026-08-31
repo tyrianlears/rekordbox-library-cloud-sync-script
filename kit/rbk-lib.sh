@@ -3,7 +3,7 @@
 # Sourced by every rbk-*.sh script and by Install.command. Not meant to be run directly.
 # Compatible with the bash 3.2 that ships with macOS.
 
-RBK_VERSION="1.2.0"
+RBK_VERSION="1.2.1"
 RBK_TAG="${RBK_TAG:-rbk}"
 
 # ---------------------------------------------------------------------------
@@ -117,19 +117,17 @@ rbk_load_config() {
     return 0
 }
 
-# Find the Google Drive "My Drive" folder that contains the Music folder.
-# Prints the path or nothing. Works for Stream mode (~/Library/CloudStorage) and Mirror mode.
+# Best default cloud folder for an unattended install: the first detected cloud folder that
+# contains a "Music" folder, else the first detected cloud folder (external disks are not defaults).
 rbk_detect_drive_root() {
-    local hit=""
-    local cand
-    for cand in "$HOME/Library/CloudStorage"/GoogleDrive-*/*/Music \
-                "$HOME/Google Drive"/*/Music \
-                "$HOME/Google Drive/Music"; do
-        [ -d "$cand" ] || continue
-        hit="$(cd "$cand/.." && pwd)"
-        break
-    done
-    [ -n "$hit" ] && printf '%s\n' "$hit"
+    local l p first=""
+    while IFS=$'\t' read -r l p; do
+        [ -n "$p" ] || continue
+        case "$l" in "External disk"*) continue ;; esac
+        [ -n "$first" ] || first="$p"
+        [ -d "$p/Music" ] && { printf '%s\n' "$p"; return 0; }
+    done < <(rbk_detect_destinations)
+    [ -n "$first" ] && printf '%s\n' "$first"
 }
 
 # Is the backup destination reachable? (cloud app running / disk connected)
@@ -140,7 +138,9 @@ rbk_dest_available() {
 rbk_drive_available() { rbk_dest_available; }   # old name, kept for the scripts
 
 # Candidate backup destinations on this Mac, one per line:  label<TAB>path
-# Google Drive / Dropbox / iCloud Drive / OneDrive (Stream and Mirror layouts) and external volumes.
+# Any cloud service that shows a folder in Finder works (the wizard also offers "Other folder…");
+# these are detected automatically: Google Drive, Dropbox, iCloud Drive, OneDrive, Box, Proton Drive,
+# pCloud, MEGA, Nextcloud, Sync.com, plus writable external volumes.
 rbk_detect_destinations() {
     local d sub pick n
     for d in "$HOME/Library/CloudStorage"/GoogleDrive-*; do
@@ -159,6 +159,12 @@ rbk_detect_destinations() {
     for d in "$HOME/Library/CloudStorage"/Dropbox* "$HOME/Dropbox"; do [ -d "$d" ] && printf 'Dropbox\t%s\n' "$d"; done
     d="$HOME/Library/Mobile Documents/com~apple~CloudDocs"; [ -d "$d" ] && printf 'iCloud Drive\t%s\n' "$d"
     for d in "$HOME/Library/CloudStorage"/OneDrive*; do [ -d "$d" ] && printf 'OneDrive\t%s\n' "$d"; done
+    for d in "$HOME/Library/CloudStorage"/Box* "$HOME/Box"; do [ -d "$d" ] && printf 'Box\t%s\n' "$d"; done
+    for d in "$HOME/Library/CloudStorage"/ProtonDrive*; do [ -d "$d" ] && printf 'Proton Drive\t%s\n' "$d"; done
+    [ -d "$HOME/pCloud Drive" ] && printf 'pCloud\t%s\n' "$HOME/pCloud Drive"
+    [ -d "$HOME/MEGA" ] && printf 'MEGA\t%s\n' "$HOME/MEGA"
+    [ -d "$HOME/Nextcloud" ] && printf 'Nextcloud\t%s\n' "$HOME/Nextcloud"
+    [ -d "$HOME/Sync" ] && printf 'Sync.com\t%s\n' "$HOME/Sync"
     for d in /Volumes/*; do
         [ -d "$d" ] || continue
         [ "$(cd "$d" 2>/dev/null && pwd -P)" = "/" ] && continue        # the boot volume
