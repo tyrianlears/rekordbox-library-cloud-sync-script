@@ -3,14 +3,17 @@
 # Sourced by every rbk-*.sh script and by Install.command. Not meant to be run directly.
 # Compatible with the bash 3.2 that ships with macOS.
 
-RBK_VERSION="1.2.1"
+RBK_VERSION="1.3.0"
 RBK_TAG="${RBK_TAG:-rbk}"
 
 # ---------------------------------------------------------------------------
 # Locations on this Mac (everything local lives under RBK_HOME)
 # ---------------------------------------------------------------------------
 RBK_HOME="${RBK_HOME:-$HOME/Library/Application Support/rekordbox-backup}"
-RBK_BIN="$RBK_HOME/bin"
+RBK_LOCAL_BIN="$RBK_HOME/bin"          # always on this Mac: the launchd launcher (rbk-launch.sh) — plus the scripts when installed locally
+RBK_BIN="$RBK_LOCAL_BIN"               # where the scripts run from; INSTALL_DIR in config.sh can move this to the backup folder / any folder
+DEFAULT_INSTALL_DIR="$RBK_LOCAL_BIN"
+DEFAULT_APP_DIR="$HOME/Applications"
 RBK_STATE="$RBK_HOME/state"
 RBK_CONFIG="$RBK_HOME/config.sh"
 RBK_LOG_DIR="${RBK_LOG_DIR:-$HOME/Library/Logs/rekordbox-backup}"
@@ -20,7 +23,7 @@ RBK_LABEL_INTERVAL="com.rekordbox-backup-kit.interval"
 RBK_LABEL_DAILY="com.rekordbox-backup-kit.daily"
 RBK_LEGACY_LABELS="com.nickrosa.rekordbox-backup.interval com.nickrosa.rekordbox-backup.daily"   # names used by kit <= 1.1
 RBK_KIT_COPY="$RBK_HOME/kit"    # full copy of the kit (README, commands...) so Settings can re-seed a new backup folder
-RBK_APP_DIR="$HOME/Applications"
+RBK_APP_DIR="$DEFAULT_APP_DIR"       # APP_DIR in config.sh can change this (~/Applications or /Applications)
 RBK_APP_NAME="rekordbox Backup.app"
 
 # What we protect — defaults for a standard rekordbox 6/7 install. Both can be changed in
@@ -109,6 +112,8 @@ rbk_load_config() {
     SETTINGS_DIR="${SETTINGS_DIR:-$DEFAULT_SETTINGS_DIR}"; APPSUPPORT_DIR="$SETTINGS_DIR"
     MUSIC_DIR="${MUSIC_DIR:-}"          # optional — only read by "Check music"
     DRIVE_ROOT="${DRIVE_ROOT:-}"        # optional — the cloud folder the backup folder lives in (for the "is it mounted" check)
+    INSTALL_DIR="${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}"; RBK_BIN="$INSTALL_DIR"   # where the scripts live (this Mac / backup folder / other)
+    APP_DIR="${APP_DIR:-$DEFAULT_APP_DIR}";             RBK_APP_DIR="$APP_DIR"
     LATEST_DIR="$BACKUP_DIR/latest"
     HISTORY_DIR="$BACKUP_DIR/history"
     OFFICIAL_DIR="$BACKUP_DIR/official"
@@ -136,6 +141,23 @@ rbk_dest_available() {
     [ -z "${DRIVE_ROOT:-}" ] || [ -d "$DRIVE_ROOT" ]
 }
 rbk_drive_available() { rbk_dest_available; }   # old name, kept for the scripts
+
+# Where the scripts are installed: "local" (this Mac), "backup" (the kit/ folder inside the backup folder) or "other"
+rbk_realpath() { local p="${1%/}" par; if [ -d "$p" ]; then (cd "$p" && pwd -P); else par=$(dirname "$p"); if [ -d "$par" ]; then printf '%s/%s\n' "$(cd "$par" && pwd -P)" "$(basename "$p")"; else printf '%s\n' "$p"; fi; fi; }
+rbk_install_kind() {
+    local i; i=$(rbk_realpath "${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}")
+    if [ "$i" = "$(rbk_realpath "$RBK_LOCAL_BIN")" ]; then echo local
+    elif [ -n "${BACKUP_DIR:-}" ] && [ "$i" = "$(rbk_realpath "$BACKUP_DIR/kit")" ]; then echo backup
+    else echo other; fi
+}
+rbk_install_available() { [ -f "${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}/rbk-backup.sh" ]; }
+rbk_install_text() {   # one human line
+    case "$(rbk_install_kind)" in
+        local)  echo "on this Mac — $INSTALL_DIR" ;;
+        backup) echo "inside the backup folder — $INSTALL_DIR (backups run only while it is available)" ;;
+        *)      echo "$INSTALL_DIR (backups run only while it is available)" ;;
+    esac
+}
 
 # Candidate backup destinations on this Mac, one per line:  label<TAB>path
 # Any cloud service that shows a folder in Finder works (the wizard also offers "Other folder…");
@@ -184,6 +206,8 @@ SETTINGS_DIR="${SETTINGS_DIR:-$DEFAULT_SETTINGS_DIR}"  # rekordbox settings fold
 BACKUP_DIR="${BACKUP_DIR:-}"                       # where backups go (any cloud folder, external disk, NAS...)
 MUSIC_DIR="${MUSIC_DIR:-}"                         # optional: music folder — NEVER written to, only checked by "Check music"
 DRIVE_ROOT="${DRIVE_ROOT:-}"                       # optional: cloud/disk root that must be mounted for backups to run
+INSTALL_DIR="${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}"  # where the scripts are installed: this Mac (default), the backup folder's kit/, or any folder
+APP_DIR="${APP_DIR:-$DEFAULT_APP_DIR}"              # where "rekordbox Backup.app" is built (~/Applications or /Applications)
 KEEP_DAILY=${KEEP_DAILY:-14}         # dated database snapshots to keep
 KEEP_MONTHLY=${KEEP_MONTHLY:-6}      # first snapshot of each month, months to keep
 KEEP_MANUAL=${KEEP_MANUAL:-10}       # "Back up now" snapshots to keep

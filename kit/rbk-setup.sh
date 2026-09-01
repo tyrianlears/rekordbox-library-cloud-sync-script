@@ -1,7 +1,7 @@
 #!/bin/bash
 # rbk-setup.sh — the folder-selection wizard used by Install.command (first launch) and by
 # the app's "Settings…" button. Sourced, not run. Sets:
-#   LIBRARY_DIR  SETTINGS_DIR  BACKUP_DIR  MUSIC_DIR  DRIVE_ROOT
+#   LIBRARY_DIR  SETTINGS_DIR  BACKUP_DIR  MUSIC_DIR  DRIVE_ROOT  INSTALL_DIR  APP_DIR
 # Graphical (macOS dialogs with a ⌘⇧G tip) when possible, typed prompts otherwise.
 
 SETUP_TITLE="rekordbox Backup — setup"
@@ -38,14 +38,15 @@ on error
 end try
 EOS
 }
-gui_choose_list() {   # prompt  items(one per line)  -> chosen line or ""
-    local prompt list="" line; prompt=$(rbk_as_escape "$1")
+gui_choose_list() {   # prompt  items(one per line)  [default item]  -> chosen line or ""
+    local prompt list="" line def=""; prompt=$(rbk_as_escape "$1")
     while IFS= read -r line; do [ -n "$line" ] || continue; list="$list${list:+, }\"$(rbk_as_escape "$line")\""; done <<EOS
 $2
 EOS
+    [ -n "${3:-}" ] && def="default items {\"$(rbk_as_escape "$3")\"}"
     osascript 2>/dev/null <<EOS
 try
-    set pick to choose from list {$list} with prompt "$prompt" with title "$SETUP_TITLE" OK button name "Choose" cancel button name "Cancel"
+    set pick to choose from list {$list} with prompt "$prompt" with title "$SETUP_TITLE" $def OK button name "Choose" cancel button name "Cancel"
     if pick is false then return ""
     return item 1 of pick
 on error
@@ -86,7 +87,39 @@ setup_validate_folders() {
     case "$(setup_realpath "$BACKUP_DIR")" in
         "/"|"$(setup_realpath "$HOME")") SETUP_ERROR="Choose a folder for the backups, not the home folder itself."; return 1 ;;
     esac
+    # install location (scripts) and app folder
+    if [ -n "${INSTALL_DIR:-}" ]; then
+        if [ -n "${MUSIC_DIR:-}" ] && setup_is_inside "$INSTALL_DIR" "$MUSIC_DIR"; then
+            SETUP_ERROR="The scripts cannot be installed inside the Music folder ($MUSIC_DIR) — the kit never writes there."; return 1; fi
+        if setup_is_inside "$INSTALL_DIR" "$LIBRARY_DIR" || { [ -n "${SETTINGS_DIR:-}" ] && setup_is_inside "$INSTALL_DIR" "$SETTINGS_DIR"; }; then
+            SETUP_ERROR="The scripts cannot be installed inside the rekordbox library or settings folder."; return 1; fi
+        if setup_is_inside "$INSTALL_DIR" "$BACKUP_DIR" && [ "$(setup_realpath "$INSTALL_DIR")" != "$(setup_realpath "$BACKUP_DIR/kit")" ]; then
+            SETUP_ERROR="Inside the backup folder the scripts can only live in its 'kit' folder ($BACKUP_DIR/kit) — everything else there is managed by the backups."; return 1; fi
+        case "$(setup_realpath "$INSTALL_DIR")" in
+            "/"|"$(setup_realpath "$HOME")") SETUP_ERROR="Choose a folder for the scripts, not the home folder itself."; return 1 ;;
+        esac
+    fi
+    if [ -n "${APP_DIR:-}" ] && [ -n "${MUSIC_DIR:-}" ] && setup_is_inside "$APP_DIR" "$MUSIC_DIR"; then
+        SETUP_ERROR="The app cannot be placed inside the Music folder."; return 1; fi
     return 0
+}
+
+# Install-location helpers. INSTALL_DIR = where the scripts run from:
+#   local  → $DEFAULT_INSTALL_DIR (this Mac)      backup → $BACKUP_DIR/kit      other → <folder>/rekordbox-backup-kit
+setup_install_from_choice() {   # local | backup | <path>
+    case "$1" in
+        local)  INSTALL_DIR="$DEFAULT_INSTALL_DIR" ;;
+        backup) INSTALL_DIR="$BACKUP_DIR/kit" ;;
+        *)      local p="${1%/}"
+                if [ "$(basename "$p")" = "rekordbox-backup-kit" ] || [ "$(setup_realpath "$p")" = "$(setup_realpath "$BACKUP_DIR/kit")" ] || [ "$(setup_realpath "$p")" = "$(setup_realpath "$DEFAULT_INSTALL_DIR")" ]; then INSTALL_DIR="$p"; else INSTALL_DIR="$p/rekordbox-backup-kit"; fi ;;
+    esac
+}
+setup_install_label() {   # human label for the summary
+    case "$(setup_realpath "${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}")" in
+        "$(setup_realpath "$DEFAULT_INSTALL_DIR")") printf 'on this Mac (%s)' "$INSTALL_DIR" ;;
+        "$(setup_realpath "$BACKUP_DIR/kit")")      printf 'inside the backup folder (%s)' "$INSTALL_DIR" ;;
+        *)                                           printf '%s' "$INSTALL_DIR" ;;
+    esac
 }
 
 # "<label><TAB><path>" candidates + a manual option; sets BACKUP_DIR and DRIVE_ROOT from a picked root
@@ -183,20 +216,53 @@ The kit never writes there; it is only used by 'Check music folder' to tell you 
             *) return 1 ;;
         esac
 
-        # 4. safety rules ----------------------------------------------------------------------
+        # 4. where the scripts and the app are installed --------------------------------------
+        local cur_label="" items def
+        items="On this Mac (recommended)  —  $DEFAULT_INSTALL_DIR"$'\n'"Inside the backup folder  —  $BACKUP_DIR/kit   (backups run only while it is available)"
+        if [ -n "${INSTALL_DIR:-}" ] && [ "$(setup_realpath "$INSTALL_DIR")" != "$(setup_realpath "$DEFAULT_INSTALL_DIR")" ] && [ "$(setup_realpath "$INSTALL_DIR")" != "$(setup_realpath "$BACKUP_DIR/kit")" ]; then
+            cur_label="Keep current  —  $INSTALL_DIR"; items="$items"$'\n'"$cur_label"
+        fi
+        items="$items"$'\n'"Other folder…  —  pick any folder (a 'rekordbox-backup-kit' folder is created inside it)"
+        case "$(setup_realpath "${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}")" in
+            "$(setup_realpath "$BACKUP_DIR/kit")") def="Inside the backup folder  —  $BACKUP_DIR/kit   (backups run only while it is available)" ;;
+            "$(setup_realpath "$DEFAULT_INSTALL_DIR")") def="On this Mac (recommended)  —  $DEFAULT_INSTALL_DIR" ;;
+            *) def="$cur_label" ;;
+        esac
+        pick=$(gui_choose_list "WHERE should the app's scripts be installed? 'On this Mac' is the safe default. Choosing the backup folder (cloud or disk) means the very same scripts are already in place on your next Mac — but automatic backups can only run while that folder is available; a small launcher stays on this Mac and warns you when it is not." "$items" "$def")
+        [ -n "$pick" ] || return 1
+        case "$pick" in
+            "On this Mac"*)   setup_install_from_choice local ;;
+            "Inside the backup"*) setup_install_from_choice backup ;;
+            "Keep current"*)  : ;;
+            *)  path=$(gui_choose_folder "Select the folder for the scripts (a 'rekordbox-backup-kit' folder is created inside it).   $GOTO_TIP" "$HOME")
+                [ -n "$path" ] || continue
+                setup_install_from_choice "$path" ;;
+        esac
+        ans=$(gui_dialog "Where should the app 'rekordbox Backup.app' go?
+
+~/Applications is your personal Applications folder (recommended). /Applications is the shared one for all users of this Mac." '{"Cancel", "/Applications", "~/Applications"}' "~/Applications")
+        case "$ans" in
+            "~/Applications") APP_DIR="$HOME/Applications" ;;
+            "/Applications")  APP_DIR="/Applications" ;;
+            *) return 1 ;;
+        esac
+
+        # 5. safety rules ----------------------------------------------------------------------
         if ! setup_validate_folders; then
             ans=$(gui_dialog "⚠️ $SETUP_ERROR" '{"Cancel", "Start over"}' "Start over" caution)
             [ "$ans" = "Start over" ] && continue
             return 1
         fi
 
-        # 5. summary ---------------------------------------------------------------------------
+        # 6. summary ---------------------------------------------------------------------------
         ans=$(gui_dialog "Please confirm:
 
 Library:   $LIBRARY_DIR
 Settings:  $SETTINGS_DIR
 Backups:   $BACKUP_DIR
 Music:     ${MUSIC_DIR:-(not set)}
+Scripts:   $(setup_install_label)
+App:       $APP_DIR/rekordbox Backup.app
 
 Nothing in the Music folder is ever modified. Backups run automatically after each rekordbox session and daily at 03:00." '{"Cancel", "Start over", "Install"}' "Install")
         case "$ans" in Install) return 0;; "Start over") continue;; *) return 1;; esac
@@ -238,9 +304,25 @@ EOS
         [ -z "$MUSIC_DIR" ] || [ -d "$MUSIC_DIR" ] && break
         echo "  folder not found: $MUSIC_DIR (type 'none' to leave it unset)"
     done
-    if ! setup_validate_folders; then echo; echo "  ❌ $SETUP_ERROR"; echo "  Let's choose again."; echo; BACKUP_DIR=""; continue; fi
+    echo "Where should the scripts be installed?"
+    echo "  [1] On this Mac (recommended) — $DEFAULT_INSTALL_DIR"
+    echo "  [2] Inside the backup folder — $BACKUP_DIR/kit   (backups run only while it is available)"
+    echo "  or type a folder path (a 'rekordbox-backup-kit' folder is created inside it)"
+    d=1; case "$(setup_realpath "${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}")" in "$(setup_realpath "$BACKUP_DIR/kit")") d=2;; "$(setup_realpath "$DEFAULT_INSTALL_DIR")") d=1;; *) d="$INSTALL_DIR";; esac
+    while :; do
+        ask "Scripts location [$d]: " "$d"
+        case "$REPLY" in
+            1) setup_install_from_choice local; break ;;
+            2) setup_install_from_choice backup; break ;;
+            *) [ -d "${REPLY%/}" ] || [ "$(basename "${REPLY%/}")" = "rekordbox-backup-kit" ] && [ -d "$(dirname "${REPLY%/}")" ] || { echo "  folder not found: $REPLY"; continue; }; setup_install_from_choice "$REPLY"; break ;;
+        esac
+    done
+    d="${APP_DIR:-$DEFAULT_APP_DIR}"
+    ask "App folder — ~/Applications or /Applications [$d]: " "$d"; APP_DIR="${REPLY/#\~/$HOME}"
+    if ! setup_validate_folders; then echo; echo "  ❌ $SETUP_ERROR"; echo "  Let's choose again."; echo; BACKUP_DIR=""; INSTALL_DIR=""; continue; fi
     echo
     echo "  Library:  $LIBRARY_DIR"; echo "  Settings: $SETTINGS_DIR"; echo "  Backups:  $BACKUP_DIR"; echo "  Music:    ${MUSIC_DIR:-(not set)}"
+    echo "  Scripts:  $(setup_install_label)"; echo "  App:      $APP_DIR/rekordbox Backup.app"
     ask "Install with these folders? [Y/n] " "Y"; case "$REPLY" in [Nn]*) return 1;; esac
     return 0
     done

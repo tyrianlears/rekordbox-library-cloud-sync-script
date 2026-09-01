@@ -8,7 +8,7 @@
 	<key>ProgramArguments</key>
 	<array>
 		<string>/bin/bash</string>
-		<string>__BIN__/rbk-backup.sh</string>
+		<string>__BIN__/rbk-launch.sh</string>
 		<string>--auto</string>
 		<string>--daily</string>
 	</array>

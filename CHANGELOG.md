@@ -1,5 +1,12 @@
 # Changelog — rekordbox backup kit
 
+## 1.3.0 — 1 Sep 2026 — choose where the scripts and the app install
+- New wizard screen: scripts **On this Mac** (default), **Inside the backup folder** (`rekordbox-backup/kit` on the cloud folder or disk, so they travel with the backups) or **Other folder…**; app in `~/Applications` or `/Applications`. Also `--install-dir local|backup|PATH` and `--app-dir PATH`.
+- `rbk-launch.sh`: a small launcher that always stays on the Mac and is what launchd calls; when the scripts folder is unreachable it logs the skip and notifies (at most once every 12 h) instead of failing silently.
+- Settings… can move the scripts later (old location tidied; the backup folder's kit copy is always kept); the app and the `.command` launchers find the scripts through `config.sh`; the app explains when the scripts folder is unavailable.
+- Safety rules for the install location: never inside the Music folder, the library/settings folders, the home folder itself, or anywhere in the backup folder other than `kit/`.
+- Self-test and Status report the launcher and the scripts location.
+
 ## 1.2.1 — 31 Aug 2026 — cloud-agnostic pass
 - Nothing depends on Google Drive any more: unattended-install default = first detected cloud folder (any service), neutral wording in the app, Check music and the scripts.
 - More cloud folders detected by the wizard: Box, Proton Drive, pCloud, MEGA, Nextcloud, Sync.com (in addition to Google Drive, Dropbox, iCloud Drive, OneDrive and external disks); anything else via "Other folder…".

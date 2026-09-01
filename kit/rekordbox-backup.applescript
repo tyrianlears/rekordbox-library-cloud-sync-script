@@ -1,14 +1,39 @@
 -- rekordbox Backup.app — the buttons for the rekordbox backup kit.
 -- Compiled by Install.command with:  osacompile -o "~/Applications/rekordbox Backup.app" rekordbox-backup.applescript
 -- Main window: status text + three buttons  [More…] [Pause/Resume automatic backups] [Back up now]
--- More… holds Restore…, Settings… (change folders — the wizard also runs at the very first launch), and the tools.
+-- More… holds Restore…, Settings… (change folders / install location — the wizard also runs at the very first launch), and the tools.
 -- Long-running actions open in a Terminal window so you can see progress; short ones show a dialog.
 
 property appTitle : "rekordbox Backup"
 
+on homeDir()
+	return (POSIX path of (path to home folder)) & "Library/Application Support/rekordbox-backup/"
+end homeDir
+
 on binDir()
-	return (POSIX path of (path to home folder)) & "Library/Application Support/rekordbox-backup/bin/"
+	-- where the scripts are installed: INSTALL_DIR in config.sh (this Mac by default, or the backup folder / any folder)
+	try
+		set p to do shell script "INSTALL_DIR=''; . " & quoted form of (homeDir() & "config.sh") & " 2>/dev/null; printf '%s' \"${INSTALL_DIR:-" & homeDir() & "bin}\""
+		if p is not "" then
+			if p does not end with "/" then set p to p & "/"
+			return p
+		end if
+	end try
+	return homeDir() & "bin/"
 end binDir
+
+on scriptsAvailable()
+	try
+		do shell script "test -f " & quoted form of (binDir() & "rbk-backup.sh")
+		return true
+	on error
+		return false
+	end try
+end scriptsAvailable
+
+on unavailableText()
+	return "The scripts folder is not available right now:" & return & binDir() & return & return & "Start the cloud app or connect the disk, then open this app again. To move the scripts back to this Mac, run Install.command from the kit folder."
+end unavailableText
 
 on runScript(scriptName, args)
 	-- run a kit script quietly and return its output (short actions only)
@@ -16,6 +41,7 @@ on runScript(scriptName, args)
 end runScript
 
 on shortStatus()
+	if not scriptsAvailable() then return unavailableText()
 	try
 		return runScript("rbk-status.sh", "--short")
 	on error errMsg
@@ -33,6 +59,10 @@ on autoState()
 end autoState
 
 on runInTerminal(scriptName, args)
+	if not scriptsAvailable() then
+		display dialog unavailableText() with title appTitle buttons {"OK"} default button 1 with icon caution
+		return
+	end if
 	set cmd to "clear; /bin/bash " & quoted form of (binDir() & scriptName) & " " & args
 	tell application "Terminal"
 		activate
@@ -99,7 +129,7 @@ on emergencyRestore()
 end emergencyRestore
 
 on openBackupFolder()
-	set cfg to (POSIX path of (path to home folder)) & "Library/Application Support/rekordbox-backup/config.sh"
+	set cfg to homeDir() & "config.sh"
 	set p to do shell script ". " & quoted form of cfg & "; printf '%s' \"$BACKUP_DIR\""
 	do shell script "/usr/bin/open " & quoted form of p
 end openBackupFolder
@@ -136,7 +166,7 @@ end firstRunSetup
 
 on isInstalled()
 	try
-		do shell script "test -f " & quoted form of ((POSIX path of (path to home folder)) & "Library/Application Support/rekordbox-backup/config.sh")
+		do shell script "test -f " & quoted form of (homeDir() & "config.sh")
 		return true
 	on error
 		return false
@@ -144,7 +174,7 @@ on isInstalled()
 end isInstalled
 
 on moreMenu()
-	set menuItems to {"Restore… — EMERGENCY: put the library back from the backup", "Settings… — change the library, backup or music folder", "Status (full report)", "Check music folder — is everything offline?", "Restore drill — safe rehearsal of a restore", "Restore rollback — undo the last restore", "Fix paths — after moving to a Mac with a different user name", "Run self-test", "Open backup folder in Finder", "View log", "Close"}
+	set menuItems to {"Restore… — EMERGENCY: put the library back from the backup", "Settings… — change the library, backup, music folder or where the scripts live", "Status (full report)", "Check music folder — is everything offline?", "Restore drill — safe rehearsal of a restore", "Restore rollback — undo the last restore", "Fix paths — after moving to a Mac with a different user name", "Run self-test", "Open backup folder in Finder", "View log", "Close"}
 	set pick to choose from list menuItems with prompt "rekordbox Backup — more tools" with title appTitle default items {"Status (full report)"} OK button name "Open" cancel button name "Close"
 	if pick is false then return
 	set choice to item 1 of pick

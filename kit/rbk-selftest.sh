@@ -41,7 +41,8 @@ else
 fi
 
 # 5. installed pieces
-[ -x "$RBK_BIN/rbk-backup.sh" ] && ok "scripts installed in $RBK_BIN" || bad "scripts not installed in $RBK_BIN"
+[ -f "$RBK_LOCAL_BIN/rbk-launch.sh" ] && ok "launcher on this Mac: $RBK_LOCAL_BIN/rbk-launch.sh" || bad "launcher missing: $RBK_LOCAL_BIN/rbk-launch.sh (re-run Install.command)"
+if rbk_install_available; then ok "scripts: $(rbk_install_text)"; else bad "scripts not available at $INSTALL_DIR — cloud app not running / disk not connected? (or re-run Install.command)"; fi
 if rbk_is_mac; then
     for L in "$RBK_LABEL_INTERVAL" "$RBK_LABEL_DAILY"; do
         if launchctl print "gui/$(id -u)/$L" >/dev/null 2>&1; then ok "scheduled job loaded: $L"; else bad "scheduled job NOT loaded: $L (re-run Install.command)"; fi

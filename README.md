@@ -19,7 +19,7 @@ It was built in a conversation with Claude for a real library (5,000+ tracks in 
 | **Emergency restore** | Puts the library back from `latest` or from any snapshot. Your current library is moved aside first, so a restore can always be undone (**rollback**). |
 | **Restore drill** | Restores into a scratch folder and verifies it — proves the backup works without touching the live library. |
 | **New-laptop guide** | Same-username trick, cloud folder → *Make available offline* → **Check music** tool (counts online-only placeholder files), rekordbox install, restore, what to verify, **Fix paths** if the username differs. |
-| **Settings wizard** | Native folder pickers for the rekordbox library, the backup destination (every cloud folder / external disk found on the Mac is listed) and the optional music folder. Safety rules refuse a destination inside the Music folder, inside the library, or the home folder itself. |
+| **Settings wizard** | Native folder pickers for the rekordbox library, the backup destination (every cloud folder / external disk found on the Mac is listed), the optional music folder, and **where the scripts and the app are installed** — on this Mac (default), inside the backup folder so they travel with it, or any folder. Safety rules refuse anything inside the Music folder, the library, or the home folder itself. |
 
 ## How it works (in one paragraph)
 
@@ -30,7 +30,7 @@ It was built in a conversation with Claude for a real library (5,000+ tracks in 
 1. **Download** this repository (green *Code* button → *Download ZIP*) or clone it, and unzip.
 2. Make sure your cloud app (Google Drive, Dropbox, iCloud, OneDrive, …) is running and signed in, and that your music folder is kept *on this Mac* ("available offline") if it lives in the cloud — see *Supported destinations* below.
 3. Quit rekordbox. In Finder open the `kit` folder, **right-click `Install.command` → Open → Open**.
-4. Answer the three-dialog wizard: library folder (detected), where backups go, optional music folder. Say **Y** to the first backup.
+4. Answer the wizard: library folder (detected), where backups go, optional music folder, where the scripts and the app install (keep **On this Mac**). Say **Y** to the first backup.
 5. Open `~/Applications/rekordbox Backup.app` → **More… › Restore drill** once, to prove the backup restores cleanly.
 
 That's it — backups now run by themselves. The full guide follows.
@@ -67,6 +67,7 @@ Two things matter for every service: the cloud app must be running and signed in
 │   ├── Uninstall.command
 │   ├── commands/               one double-click file per action (same as the app buttons)
 │   ├── rbk-setup.sh            the folder wizard (first launch and Settings…)
+│   ├── rbk-launch.sh           the small launcher launchd calls — always stays on the Mac
 │   ├── rbk-backup.sh           backup engine (used by the schedule and the app)
 │   ├── rbk-restore.sh          restore, restore drill, rollback
 │   ├── rbk-toggle.sh           pause / resume the automatic backups
@@ -80,7 +81,7 @@ Two things matter for every service: the cloud app must be running and signed in
 └── logs/                       copy of the recent log
 ```
 
-On the Mac the kit installs itself into `~/Library/Application Support/rekordbox-backup/`, the schedule into `~/Library/LaunchAgents/`, and the app **rekordbox Backup.app** into `~/Applications/`.
+On the Mac the kit installs its scripts into `~/Library/Application Support/rekordbox-backup/bin/` by default — or, if you choose so in the wizard, into the backup folder's `kit/` (so the very same scripts are already in place on your next Mac) or any folder you like. A small launcher and the settings always stay in `~/Library/Application Support/rekordbox-backup/`, the schedule in `~/Library/LaunchAgents/`, and the app **rekordbox Backup.app** goes into `~/Applications/` (or `/Applications/`).
 
 ---
 
@@ -93,6 +94,8 @@ On the Mac the kit installs itself into `~/Library/Application Support/rekordbox
    - **rekordbox library folder.** The kit detects `~/Library/Pioneer` and checks that `master.db` is inside. Press **Use this folder**, or **Choose another…** if your library lives elsewhere (for example after *Preferences › Advanced › Database management › Move Database*).
    - **Where the backups go.** A list of every cloud folder and external disk found on this Mac; pick one, or **Other folder…** to browse. A folder called `rekordbox-backup` is created inside the place you choose. Safety rules are enforced: the backup folder can never be inside the Music folder, inside the rekordbox library, or be your home folder itself — the wizard says so and lets you choose again.
    - **Music folder (optional).** Only used by *Check music folder*; never written to. Skip it if you like.
+   - **Where the scripts are installed.** **On this Mac** (recommended, pre-selected) keeps everything local. **Inside the backup folder** puts the working scripts in `rekordbox-backup › kit` on your cloud folder or disk — handy on a new Mac, but automatic backups then run only while that folder is available (a small launcher stays on the Mac and notifies you when it is not). **Other folder…** creates a `rekordbox-backup-kit` folder wherever you point it. The same safety rules apply: never inside the Music folder, the library, or the backups themselves.
+   - **Where the app goes.** `~/Applications` (yours, recommended) or `/Applications` (shared by every user of this Mac; if it is not writable the app falls back to `~/Applications`).
    - A summary follows — press **Install**.
    - **Tip for every folder window:** the `Library` folder is hidden by default. Press **⌘⇧G** (Command-Shift-G), paste the path — e.g. `~/Library/Pioneer` — and press Enter; the window jumps straight there. `~` means your home folder. (⌘⇧. shows hidden folders too.)
 5. The installer then copies the scripts, schedules the automatic backups, builds the app, sends a **test notification**, runs a self-test and offers to run the **first backup** (say **Y**; the first run copies the whole library, later runs take seconds). The app opens at the end.
@@ -202,8 +205,9 @@ The music paths in the database contain the user name (for example `/Users/<name
 ## 7. How it works (technical brief)
 
 - **Engine:** `rsync` mirrors `~/Library/Pioneer` and `~/Library/Application Support/Pioneer` into `latest/` (incremental, `--delete`, so `latest/` always equals the source). Snapshots copy everything except the `share/` analysis trees.
-- **Folders:** chosen in the wizard and stored in `config.sh` as `LIBRARY_DIR`, `SETTINGS_DIR`, `BACKUP_DIR`, `MUSIC_DIR` (optional) and `DRIVE_ROOT` (optional: the cloud/disk root that must be mounted for a backup to run). The wizard is `rbk-setup.sh`; `Install.command --library … --backup … --music … --yes` installs without questions.
-- **Schedule:** two launchd agents — `com.rekordbox-backup-kit.interval` (every 1800 s) and `…daily` (03:00, also housekeeping). Both run `rbk-backup.sh --auto`.
+- **Folders:** chosen in the wizard and stored in `config.sh` as `LIBRARY_DIR`, `SETTINGS_DIR`, `BACKUP_DIR`, `MUSIC_DIR` (optional), `DRIVE_ROOT` (optional: the cloud/disk root that must be mounted for a backup to run), `INSTALL_DIR` and `APP_DIR`. The wizard is `rbk-setup.sh`; `Install.command --library … --backup … --music … --install-dir local|backup|PATH --app-dir PATH --yes` installs without questions.
+- **Schedule:** two launchd agents — `com.rekordbox-backup-kit.interval` (every 1800 s) and `…daily` (03:00, also housekeeping). Both call `rbk-launch.sh`, which always lives on the Mac.
+- **Install location:** `INSTALL_DIR` in `config.sh` says where the scripts run from — `~/Library/Application Support/rekordbox-backup/bin` (default), `<backup folder>/kit`, or any folder. `rbk-launch.sh` runs `rbk-backup.sh` from there; when that location is missing (cloud app not running, disk unplugged) it logs the skip and sends a notification at most once every 12 hours, so nothing fails silently. The app and the `.command` launchers read the same setting. Settings, state, lock and logs never leave the Mac. `APP_DIR` says where the app is built.
 - **Pause / Resume:** `rbk-toggle.sh` unloads the two agents (`launchctl bootout`) **and** marks them disabled (`launchctl disable`), which is why a pause survives reboots; Resume re-enables and reloads them. The app reads the real launchd state every time it opens, so the button label cannot drift.
 - **Safety rules built in:** skip if rekordbox is running (`pgrep -x rekordbox`); skip if the backup folder is not available (cloud app not running, disk unplugged); skip if nothing changed since the last stamp; one job at a time (lock); a backup is only marked successful if `master.db` is present in the mirror; a restore always keeps the previous library and can be rolled back; the `Music` folder is never written.
 - **Change detection:** files newer than the last-backup stamp; snapshot only when the fingerprint of the database files changed.
@@ -220,6 +224,7 @@ The music paths in the database contain the user name (for example `/Users/<name
 | "Install.command cannot be opened because Apple could not verify it / unidentified developer" | Right-click → Open → Open. Or System Settings › Privacy & Security › scroll down › **Open Anyway**. |
 | Log shows `Operation not permitted` | System Settings › Privacy & Security › **Full Disk Access** → add **Terminal**, **rekordbox Backup.app** and `/bin/bash` (in the file picker press ⌘⇧G and type `/bin/bash`). Then re-run the self-test. |
 | Status says the backup folder is **not available** | The cloud app is not running or signed out, or the external disk is not connected. Fix that, wait a minute, run Back up now. Runs that were skipped meanwhile are simply retried. |
+| Notification *"Automatic backup skipped: the scripts folder is not available"* | You installed the scripts inside the backup folder or on a disk, and that location is currently unreachable. Start the cloud app / connect the disk — backups resume by themselves. Prefer not to depend on it? App → More… › Settings… → *On this Mac*. |
 | I cannot see the `Library` folder in the folder window | It is hidden by default: press **⌘⇧G** and paste `~/Library/Pioneer` (or press ⌘⇧. to show hidden folders). |
 | I picked the wrong folder | App → More… › **Settings…** and choose again. Changing the backup destination triggers a full mirror on the next run. |
 | The wizard refuses my backup folder | It is inside the Music folder, inside the rekordbox library, or it is the home folder itself. Pick a separate folder (e.g. the root of your cloud drive, an external disk). |
@@ -240,7 +245,7 @@ Every script can also be run from Terminal with `--help` from `~/Library/Applica
 
 ## 9. Uninstall
 
-Double-click `kit/Uninstall.command`. It removes the schedule, the app and the local scripts. Your backups and the rekordbox library stay untouched. To reinstall later: `Install.command`.
+Double-click `kit/Uninstall.command`. It removes the schedule, the app, the local files and — if you installed the scripts into an *Other folder* — that `rekordbox-backup-kit` folder. Your backups, the kit copy inside the backup folder and the rekordbox library stay untouched. To reinstall later: `Install.command`.
 
 ---
 
