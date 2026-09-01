@@ -1,6 +1,6 @@
 # Disclaimer — please read before you use this kit
 
-**No warranty, no liability.** This software is provided free of charge, "as is", without warranty of any kind (see [LICENSE](LICENSE)). The author, Nick Rosa, accepts **no responsibility and no liability for any loss of or damage to data — including a corrupted or missing rekordbox library, lost playlists, cue points, beat grids, tags, ratings or analysis data, unusable music files, downtime before a gig, or any other direct or indirect damage — arising from the use, misuse or inability to use this kit, however it was installed or configured.** You use it entirely at your own risk, and you remain responsible for your own backups.
+**No warranty, no liability.** This software is provided free of charge, "as is", without warranty of any kind (see [LICENSE](LICENSE)). The author, Tyrian Lears, accepts **no responsibility and no liability for any loss of or damage to data — including a corrupted or missing rekordbox library, lost playlists, cue points, beat grids, tags, ratings or analysis data, unusable music files, downtime before a gig, or any other direct or indirect damage — arising from the use, misuse or inability to use this kit, however it was installed or configured.** You use it entirely at your own risk, and you remain responsible for your own backups.
 
 This is an independent community project. It is not affiliated with, endorsed by or supported by AlphaTheta / Pioneer DJ. rekordbox is a trademark of its owner.
 

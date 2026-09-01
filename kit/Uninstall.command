@@ -15,7 +15,7 @@ printf 'Continue? [y/N] '; read -r REPLY
 case "$REPLY" in [Yy]*) ;; *) echo "Cancelled."; exit 0;; esac
 
 if rbk_is_mac; then
-    for L in "$RBK_LABEL_INTERVAL" "$RBK_LABEL_DAILY" $RBK_LEGACY_LABELS; do
+    for L in "$RBK_LABEL_INTERVAL" "$RBK_LABEL_DAILY" $(rbk_legacy_labels); do
         [ -f "$RBK_LAUNCH_AGENTS/$L.plist" ] || continue
         launchctl bootout "gui/$(id -u)/$L" >/dev/null 2>&1 || launchctl unload "$RBK_LAUNCH_AGENTS/$L.plist" >/dev/null 2>&1 || true
         launchctl enable "gui/$(id -u)/$L" >/dev/null 2>&1 || true    # clear a "paused" (disabled) mark so a later reinstall starts clean

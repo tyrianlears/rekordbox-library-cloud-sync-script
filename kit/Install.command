@@ -134,7 +134,7 @@ step "4/7  Scheduling automatic backups (every 30 min + daily 03:00)"
 rm -f "$RBK_STATE/paused-since"
 if rbk_is_mac; then
     mkdir -p "$RBK_LAUNCH_AGENTS"
-    for L in $RBK_LEGACY_LABELS; do    # remove jobs from kit <= 1.1
+    for L in $(rbk_legacy_labels); do    # remove jobs left by pre-release kits
         [ -f "$RBK_LAUNCH_AGENTS/$L.plist" ] || continue
         launchctl bootout "gui/$(id -u)/$L" >/dev/null 2>&1 || true; launchctl enable "gui/$(id -u)/$L" >/dev/null 2>&1 || true
         rm -f "$RBK_LAUNCH_AGENTS/$L.plist"; echo "  removed old job $L"

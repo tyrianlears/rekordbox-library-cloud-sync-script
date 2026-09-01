@@ -3,7 +3,7 @@
 # Sourced by every rbk-*.sh script and by Install.command. Not meant to be run directly.
 # Compatible with the bash 3.2 that ships with macOS.
 
-RBK_VERSION="1.3.1"
+RBK_VERSION="1.3.2"
 RBK_TAG="${RBK_TAG:-rbk}"
 
 # ---------------------------------------------------------------------------
@@ -21,7 +21,15 @@ RBK_LOG="$RBK_LOG_DIR/rekordbox-backup.log"
 RBK_LAUNCH_AGENTS="$HOME/Library/LaunchAgents"
 RBK_LABEL_INTERVAL="com.rekordbox-backup-kit.interval"
 RBK_LABEL_DAILY="com.rekordbox-backup-kit.daily"
-RBK_LEGACY_LABELS="com.nickrosa.rekordbox-backup.interval com.nickrosa.rekordbox-backup.daily"   # names used by kit <= 1.1
+# Jobs left behind by pre-release kits (any label matching *.rekordbox-backup.* other than the two above) are removed on install/uninstall
+rbk_legacy_labels() {
+    local p l
+    for p in "$RBK_LAUNCH_AGENTS"/*.rekordbox-backup.*.plist; do
+        [ -f "$p" ] || continue
+        l=$(basename "$p" .plist)
+        [ "$l" = "$RBK_LABEL_INTERVAL" ] || [ "$l" = "$RBK_LABEL_DAILY" ] || printf '%s\n' "$l"
+    done
+}
 RBK_KIT_COPY="$RBK_HOME/kit"    # full copy of the kit (README, commands...) so Settings can re-seed a new backup folder
 RBK_APP_DIR="$DEFAULT_APP_DIR"       # APP_DIR in config.sh can change this (~/Applications or /Applications)
 RBK_APP_NAME="rekordbox Backup.app"

@@ -296,4 +296,4 @@ Use at your own risk — the author accepts no responsibility for any loss of da
 
 ## License
 
-[MIT](LICENSE) © 2026 Nick Rosa
+[MIT](LICENSE) © 2026 Tyrian Lears

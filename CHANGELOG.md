@@ -1,5 +1,9 @@
 # Changelog — rekordbox backup kit
 
+## 1.3.2 — 1 Sep 2026 — author credit
+- Author credited as Tyrian Lears everywhere (LICENSE, README, DISCLAIMER, NOTES).
+- Pre-release launchd job names are no longer hard-coded: any leftover `*.rekordbox-backup.*` job is detected and removed on install/uninstall.
+
 ## 1.3.1 — 1 Sep 2026 — disclaimer
 - `DISCLAIMER.md` (no warranty, no liability for data loss; the author takes no responsibility) with the step-by-step rekordbox **File › Library › Backup Library** procedure (library only, no music files) and how to restore it; linked from a prominent section at the top of the README.
 - The wizard's welcome screen and the typed setup repeat the warning; the installer copies `DISCLAIMER.md` and `LICENSE` next to the backups and writes the backup steps into `official/README.txt`.
