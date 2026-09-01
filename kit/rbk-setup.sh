@@ -139,7 +139,9 @@ setup_gui() {
 2. WHERE the backups go — Google Drive, Dropbox, iCloud, OneDrive, an external disk… any folder.
 3. Optionally, your MUSIC folder — only ever read, never written to.
 
-When a folder window opens you can press ⌘⇧G and paste a path. You can change all of this later with the app's Settings… button." '{"Cancel", "Continue"}' "Continue") 
+When a folder window opens you can press ⌘⇧G and paste a path. You can change all of this later with the app's Settings… button.
+
+⚠️ Use this kit at your own risk — it comes with no warranty and the author accepts no responsibility for lost data. Always keep rekordbox's own backups too: File › Library › Backup Library, answer No to including the music files, save the zip (see DISCLAIMER.md)." '{"Cancel", "Continue"}' "Continue") 
         [ "$ans" = "Continue" ] || return 1
     fi
     while :; do
@@ -273,6 +275,8 @@ Nothing in the Music folder is ever modified. Backups run automatically after ea
 setup_text() {
     local d line n i p
     echo "Folder setup (press Enter to accept the value in brackets)."
+    echo "⚠️  Use this kit at your own risk (no warranty, no liability for lost data). Keep rekordbox's own backups too:"
+    echo "    File › Library › Backup Library — answer No to including the music files — save the zip. See DISCLAIMER.md."
     while :; do
     d="${LIBRARY_DIR:-$DEFAULT_LIBRARY_DIR}"
     while :; do

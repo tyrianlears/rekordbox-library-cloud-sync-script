@@ -8,6 +8,19 @@ It was built in a conversation with Claude for a real library (5,000+ tracks in 
 
 > The Music folder is never written to — every part of the kit treats it as read-only.
 
+## ⚠️ Disclaimer — read this first
+
+**Use at your own risk. The author accepts no responsibility for any loss of data** — a corrupted or missing library, lost playlists, cues, grids, tags or analysis data, unusable files, or any other damage — arising from the use of this kit, whatever the cause. It is free software provided as is, without warranty of any kind ([MIT license](LICENSE)); you remain responsible for your own backups.
+
+**Always keep rekordbox's own backup too.** Before installing or updating this kit, before any restore, before moving to a new Mac, and at least once a month:
+
+1. In rekordbox choose **File › Library › Backup Library**.
+2. Click **OK** on the "this may take a while" message.
+3. When rekordbox asks whether to also back up the music files, answer **No** — the library only.
+4. Save the zip somewhere safe, for example `rekordbox-backup/official/` on your cloud folder or an external disk.
+
+This backs up the database, cues, grids, tags, analysis data and settings — not the music files, which stay in your music folder. To put it back later: **File › Library › Restore Library**. Full text and details: [DISCLAIMER.md](DISCLAIMER.md).
+
 ## What it does
 
 | | |
@@ -124,7 +137,7 @@ Opened the app before installing? It shows a **Set up…** button that asks for 
 
 **Notifications:** after **every completed backup** you get a macOS notification like *"rekordbox backup ✓ — 14:32 · 12 files updated + daily snapshot · 4s"*. Runs that are skipped (rekordbox open, nothing changed) stay silent so you are not spammed; problems always notify, and so does a stale backup (3 days). Pause and Resume confirm with a notification too. Prefer silence for the automatic runs? Set `NOTIFY_SUCCESS=0` in `config.sh`.
 
-**Once a month (and always before changing Mac):** in rekordbox choose **File › Library › Backup Library** and save the zip into `rekordbox-backup/official/`. This is Pioneer's own, officially supported backup format — belt and braces on top of the kit.
+**Once a month (and always before changing Mac):** in rekordbox choose **File › Library › Backup Library** (steps in the Disclaimer above) and save the zip into `rekordbox-backup/official/`. This is Pioneer's own, officially supported backup format — belt and braces on top of the kit, and the one backup you must never skip.
 
 **Good habit:** run **More… › Restore drill** every few months. It restores the backup into a scratch folder and verifies it, without touching your real library, so you *know* the backup works before you ever need it.
 
@@ -265,6 +278,9 @@ Data-check legend: ✅ verified against the primary source · ⚠️ secondary s
 10. ✅ Apple — launchd job definitions: `man launchd.plist` and `man launchctl` (built into macOS Terminal)
 11. ✅ Apple Support — Mac keyboard shortcuts: Shift-Command-G opens the Go to Folder window — https://support.apple.com/en-us/102650
 12. ✅ Apple Support — Go directly to a specific folder on Mac (`~` = home folder; Option + Go menu reveals Library) — https://support.apple.com/en-in/guide/mac-help/mchlp1236/mac
+13. ⚠️ Pioneer DJ forums (staff answer) — Backup Library flow: File › Library › Backup Library → "may take a while" OK → asked whether to include the music files → choose location — https://forums.pioneerdj.com/hc/en-us/community/posts/205849915-Back-up-library-function-on-Rekordbox
+14. ⚠️ Pioneer DJ forums (staff answer) — the library backup does not contain the music files; the music-files prompt can be skipped for a database-only backup — https://forums.pioneerdj.com/hc/en-us/community/posts/16834184966809-Backing-up-rekordbox-library-metadata-and-music-library-separately
+15. ⚠️ Pioneer DJ forums (staff answer) — restore a Backup Library zip with File › Library › Restore Library, not by copying folders — https://forums.pioneerdj.com/hc/en-us/community/posts/360044657671-Issue-with-restore-library-functionality-from-database-and-USB
 
 Verified on the Mac only after the first run (see NOTES.md): exact rekordbox 7 folder names, openrsync flags on macOS Tahoe, placeholder detection, macOS file-access prompts.
 
@@ -276,7 +292,7 @@ Issues and pull requests are welcome. Please keep the two rules every change mus
 
 ## Disclaimer
 
-This is an independent, community project. It is not affiliated with, endorsed by or supported by AlphaTheta / Pioneer DJ. rekordbox is a trademark of its owner. Back up before you restore; use at your own risk.
+Use at your own risk — the author accepts no responsibility for any loss of data; keep rekordbox's own Backup Library zips as well. The full text, with the backup procedure, is in [DISCLAIMER.md](DISCLAIMER.md). This is an independent community project, not affiliated with, endorsed by or supported by AlphaTheta / Pioneer DJ; rekordbox is a trademark of its owner.
 
 ## License
 

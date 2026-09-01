@@ -121,12 +121,12 @@ rbk_load_config >/dev/null || { done_msg "❌ Config could not be loaded."; exit
 step "3/7  Preparing $BACKUP_DIR"
 mkdir -p "$LATEST_DIR" "$HISTORY_DIR" "$OFFICIAL_DIR" "$DRIVE_LOG_DIR" "$BACKUP_DIR/kit" || { done_msg "❌ Cannot create folders inside $BACKUP_DIR (permission? see README › Troubleshooting)."; exit 1; }
 if [ -n "$KIT_ROOT" ] && [ "$KIT_ROOT" != "$BACKUP_DIR" ]; then
-    for f in README.md README.pdf NOTES.md CHANGELOG.md; do [ -f "$KIT_ROOT/$f" ] && cp "$KIT_ROOT/$f" "$BACKUP_DIR/"; done
+    for f in README.md README.pdf DISCLAIMER.md LICENSE NOTES.md CHANGELOG.md; do [ -f "$KIT_ROOT/$f" ] && cp "$KIT_ROOT/$f" "$BACKUP_DIR/"; done
     cp -R "$KIT_ROOT/kit"/. "$BACKUP_DIR/kit/" && echo "Kit copied next to the backups (so it is there on a new Mac): $BACKUP_DIR/kit"
 else
     echo "Installer is running from the backup folder's own copy — nothing to copy."
 fi
-[ -f "$OFFICIAL_DIR/README.txt" ] || printf 'Save rekordbox'"'"'s own backups here: rekordbox › File › Library › Backup Library.\nDo this monthly and always before moving to a new Mac.\n' > "$OFFICIAL_DIR/README.txt"
+[ -f "$OFFICIAL_DIR/README.txt" ] || printf 'Save rekordbox'"'"'s own library backups here.\n\n1. In rekordbox: File > Library > Backup Library\n2. Click OK on the "this may take a while" message\n3. Answer NO when asked whether to also back up the music files (library only)\n4. Save the zip in this folder\n\nDo this at least monthly, before installing/updating the kit, before any restore and before moving to a new Mac.\nRestore with File > Library > Restore Library. Use the kit at your own risk - see DISCLAIMER.md.\n' > "$OFFICIAL_DIR/README.txt"
 
 # ---- 4. scheduled jobs (launchd) ---------------------------------------------------------------
 step "4/7  Scheduling automatic backups (every 30 min + daily 03:00)"

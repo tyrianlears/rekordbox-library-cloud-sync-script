@@ -1,5 +1,9 @@
 # Changelog — rekordbox backup kit
 
+## 1.3.1 — 1 Sep 2026 — disclaimer
+- `DISCLAIMER.md` (no warranty, no liability for data loss; the author takes no responsibility) with the step-by-step rekordbox **File › Library › Backup Library** procedure (library only, no music files) and how to restore it; linked from a prominent section at the top of the README.
+- The wizard's welcome screen and the typed setup repeat the warning; the installer copies `DISCLAIMER.md` and `LICENSE` next to the backups and writes the backup steps into `official/README.txt`.
+
 ## 1.3.0 — 1 Sep 2026 — choose where the scripts and the app install
 - New wizard screen: scripts **On this Mac** (default), **Inside the backup folder** (`rekordbox-backup/kit` on the cloud folder or disk, so they travel with the backups) or **Other folder…**; app in `~/Applications` or `/Applications`. Also `--install-dir local|backup|PATH` and `--app-dir PATH`.
 - `rbk-launch.sh`: a small launcher that always stays on the Mac and is what launchd calls; when the scripts folder is unreachable it logs the skip and notifies (at most once every 12 h) instead of failing silently.

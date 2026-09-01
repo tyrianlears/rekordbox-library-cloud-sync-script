@@ -3,7 +3,7 @@
 # Sourced by every rbk-*.sh script and by Install.command. Not meant to be run directly.
 # Compatible with the bash 3.2 that ships with macOS.
 
-RBK_VERSION="1.3.0"
+RBK_VERSION="1.3.1"
 RBK_TAG="${RBK_TAG:-rbk}"
 
 # ---------------------------------------------------------------------------
